@@ -7,3 +7,9 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME : "admin"
       MONGO_INITDB_ROOT_PASSWORD : "admin"
+
+  redis:
+    image: redis:latest
+    container_name: tokenserviceredis
+    ports:
+      - "6000:6379"

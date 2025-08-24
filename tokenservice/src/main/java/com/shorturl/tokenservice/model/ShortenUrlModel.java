@@ -2,8 +2,8 @@ package com.shorturl.tokenservice.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
@@ -14,7 +14,10 @@ import java.time.Instant;
 public class ShortenUrlModel {
     @Id
     private String id;
+    @Indexed
     private String longUrl;
-    private String shortUrl;
+    private String shortCode;
+    @Indexed(unique = true)
+    private Long decodedShortCode;
     private Instant createdAt;
 }

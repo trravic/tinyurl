@@ -13,11 +13,16 @@ public class Base62Encoder {
         return stringBuilder.toString();
     }
 
-    static public long decode(String number) {
+    static public long decode(String number) throws IllegalArgumentException {
         long result = 0L;
         int length = number.length();
         for (int i = 0; i < length; i++) {
-            result += (long) Math.pow(base, i) * characters.indexOf(number.charAt(length - i - 1));
+            char ch = number.charAt(length - i - 1);
+            int index = characters.indexOf(ch);
+            if (index == -1) {
+                throw new IllegalArgumentException("Incorrect Request Url");
+            }
+            result += (long) Math.pow(base, i) * index;
         }
         return result;
     }
