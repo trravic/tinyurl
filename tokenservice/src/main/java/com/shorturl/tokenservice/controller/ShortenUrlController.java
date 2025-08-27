@@ -17,7 +17,7 @@ public class ShortenUrlController {
     private final ShortenUrlService shortenUrlService;
 
     @PostMapping("/shorten")
-    public ResponseEntity<ShortenUrlResponseDTO> shortenUrl(@RequestBody @Valid ShortenUrlRequestDTO requestDTO) {
+    public ResponseEntity<ShortenUrlResponseDTO> shortenUrl(@RequestBody @Valid ShortenUrlRequestDTO requestDTO) throws Exception {
         ShortenUrlResponseDTO shortenUrlResponseDTO = shortenUrlService.shortenUrl(requestDTO);
         return new ResponseEntity<>(shortenUrlResponseDTO, HttpStatus.CREATED);
     }

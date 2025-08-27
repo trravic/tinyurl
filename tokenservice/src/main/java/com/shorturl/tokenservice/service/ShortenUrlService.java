@@ -8,25 +8,31 @@ import com.shorturl.tokenservice.model.ShortenUrlModel;
 import com.shorturl.tokenservice.repository.ShortenUrlRepository;
 import com.shorturl.tokenservice.util.Base62Encoder;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
 public class ShortenUrlService {
+    private static final Logger log = LoggerFactory.getLogger(ShortenUrlService.class);
     private final ShortenUrlRepository shortenUrlRepository;
     private final RedisService redisService;
+    private final TokenRangeManagerService tokenRangeManagerService;
 
     private static final String CURRENT_KEY = "token-service:range:current";
     private static final String MAX_KEY = "token-service:range:max";
 
-    private synchronized Long nextCounter() {
+    private synchronized Long nextCounter() throws Exception {
         Long currentValue = parseLong(redisService.getByKey(CURRENT_KEY));
         Long maxValue = parseLong(redisService.getByKey(MAX_KEY));
 
         if (currentValue == null || maxValue == null || currentValue >= maxValue) {
-            RangeResponse range = fetchNewRangeFromTRS();  // External HTTP call
+            log.info("Redis missing keys or expired. Calling zookeeper for getting new range");
+            RangeResponse range = tokenRangeManagerService.fetchNewRangeFromTRMS((new Random().nextInt(10)) * 1000);
 
             currentValue = range.getStart();
             maxValue = range.getEnd();
@@ -48,12 +54,7 @@ public class ShortenUrlService {
         }
     }
 
-    private RangeResponse fetchNewRangeFromTRS() {
-        // TODO: Replace with actual HTTP client code or service call
-        return new RangeResponse(10000L, 20000L);
-    }
-
-    public ShortenUrlResponseDTO shortenUrl(ShortenUrlRequestDTO requestDTO) {
+    public ShortenUrlResponseDTO shortenUrl(ShortenUrlRequestDTO requestDTO) throws Exception {
         Long counter = nextCounter();
         String longUrl = requestDTO.getLongUrl().strip();
         String shortCode = Base62Encoder.encode(counter);
