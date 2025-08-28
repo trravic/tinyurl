@@ -32,7 +32,7 @@ public class ShortenUrlService {
 
         if (currentValue == null || maxValue == null || currentValue >= maxValue) {
             log.info("Redis missing keys or expired. Calling zookeeper for getting new range");
-            RangeResponse range = tokenRangeManagerService.fetchNewRangeFromTRMS((new Random().nextInt(10)) * 1000);
+            RangeResponse range = tokenRangeManagerService.fetchNewRangeFromTRMS((new Random().nextInt(10) + 1) * 1000);
 
             currentValue = range.getStart();
             maxValue = range.getEnd();
