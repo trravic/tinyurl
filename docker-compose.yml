@@ -1,0 +1,56 @@
+services:
+  mongo:
+    image: mongo:7.0.5
+    container_name: tokenservicedb
+    ports:
+      - "20000:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME : "admin"
+      MONGO_INITDB_ROOT_PASSWORD : "admin"
+  zookeeper:
+    image: zookeeper:3.7
+    container_name: zookeeper
+    ports:
+      - "2191:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_PORT: 2181
+      ZOO_TICK_TIME: 2000
+      ZOO_INIT_LIMIT: 5
+      ZOO_SYNC_LIMIT: 2
+  redis-1:
+    image: redis:latest
+    container_name: tokenservice-1-redis
+    ports:
+      - "6001:6379"
+  redis-2:
+    image: redis:latest
+    container_name: tokenservice-2-redis
+    ports:
+      - "6002:6379"
+  tokenservice-1:
+    image: tokenservice:latest
+    container_name: tokenservice-1
+    depends_on:
+      - mongo
+      - redis-1
+      - zookeeper
+    environment:
+      SPRING_PROFILES_ACTIVE: "docker"
+      SPRING_REDIS_HOST: "redis-1"
+      SPRING_REDIS_PORT: 6379
+    ports:
+      - "9001:8000"
+  tokenservice-2:
+    image: tokenservice:latest
+    container_name: tokenservice-2
+    depends_on:
+      - mongo
+      - redis-2
+      - zookeeper
+    environment:
+      SPRING_PROFILES_ACTIVE: "docker"
+      SPRING_REDIS_HOST: "redis-2"
+      SPRING_REDIS_PORT: 6379
+    ports:
+      - "9002:8000"
