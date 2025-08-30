@@ -8,7 +8,7 @@ Inspired from https://systemdesign.one/url-shortening-system-design/#further-sys
 ---
 
 ## 📸 Architecture
-![tinyurl](https://github.com/user-attachments/assets/b6f9dcba-11f0-4034-820f-a49bde732e76)
+![tinyurl](https://github.com/user-attachments/assets/7f977690-aa4c-49fa-ace0-013e3bd0dc39)
 
 ---
 
