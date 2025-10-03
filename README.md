@@ -36,7 +36,7 @@ This project demonstrates **real-world system design patterns** including:
 The system uses a **microservices architecture** with:
 - **Token Service**: Multiple instances generate unique short codes using pre-allocated ranges
 - **Token Range Service**: Manages token range distribution to prevent collisions
-- **Redis**: Acts as a distributed cache layer for fast URL lookups
+- **Redis**: Acting as a distributed cache layer for fast URL lookups
 - **MongoDB**: Persistent storage for URL mappings
 - **Zookeeper**: Coordinates distributed token range allocation
 
