@@ -7,50 +7,121 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME : "admin"
       MONGO_INITDB_ROOT_PASSWORD : "admin"
-  zookeeper:
+    networks:
+      - zookeeper-net
+  zookeeper-1:
     image: zookeeper:3.7
-    container_name: zookeeper
+    container_name: zookeeper-1
+    hostname: zookeeper-1
     ports:
-      - "2191:2181"
+      - "2181:2181"
     environment:
       ZOO_MY_ID: 1
       ZOO_PORT: 2181
       ZOO_TICK_TIME: 2000
-      ZOO_INIT_LIMIT: 5
-      ZOO_SYNC_LIMIT: 2
+      ZOO_INIT_LIMIT: 10
+      ZOO_SYNC_LIMIT: 5
+      ZOO_SERVERS: server.1=zookeeper-1:2888:3888;2181 server.2=zookeeper-2:2888:3888;2181 server.3=zookeeper-3:2888:3888;2181
+    volumes:
+      - zookeeper-1-data:/data
+      - zookeeper-1-logs:/datalog
+    networks:
+      - zookeeper-net
+
+  zookeeper-2:
+    image: zookeeper:3.7
+    container_name: zookeeper-2
+    hostname: zookeeper-2
+    ports:
+      - "2182:2181"
+    environment:
+      ZOO_MY_ID: 2
+      ZOO_PORT: 2181
+      ZOO_TICK_TIME: 2000
+      ZOO_INIT_LIMIT: 10
+      ZOO_SYNC_LIMIT: 5
+      ZOO_SERVERS: server.1=zookeeper-1:2888:3888;2181 server.2=zookeeper-2:2888:3888;2181 server.3=zookeeper-3:2888:3888;2181
+    volumes:
+      - zookeeper-2-data:/data
+      - zookeeper-2-logs:/datalog
+    networks:
+      - zookeeper-net
+
+  zookeeper-3:
+    image: zookeeper:3.7
+    container_name: zookeeper-3
+    hostname: zookeeper-3
+    ports:
+      - "2183:2181"
+    environment:
+      ZOO_MY_ID: 3
+      ZOO_PORT: 2181
+      ZOO_TICK_TIME: 2000
+      ZOO_INIT_LIMIT: 10
+      ZOO_SYNC_LIMIT: 5
+      ZOO_SERVERS: server.1=zookeeper-1:2888:3888;2181 server.2=zookeeper-2:2888:3888;2181 server.3=zookeeper-3:2888:3888;2181
+    volumes:
+      - zookeeper-3-data:/data
+      - zookeeper-3-logs:/datalog
+    networks:
+      - zookeeper-net
   redis-1:
     image: redis:latest
     container_name: tokenservice-1-redis
     ports:
       - "6001:6379"
+    networks:
+      - zookeeper-net
   redis-2:
     image: redis:latest
     container_name: tokenservice-2-redis
     ports:
       - "6002:6379"
+    networks:
+      - zookeeper-net
   tokenservice-1:
     image: tokenservice:latest
     container_name: tokenservice-1
     depends_on:
       - mongo
       - redis-1
-      - zookeeper
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
     environment:
       SPRING_PROFILES_ACTIVE: "docker"
       SPRING_REDIS_HOST: "redis-1"
       SPRING_REDIS_PORT: 6379
     ports:
       - "9001:8000"
+    networks:
+      - zookeeper-net
   tokenservice-2:
     image: tokenservice:latest
     container_name: tokenservice-2
     depends_on:
       - mongo
       - redis-2
-      - zookeeper
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
     environment:
       SPRING_PROFILES_ACTIVE: "docker"
       SPRING_REDIS_HOST: "redis-2"
       SPRING_REDIS_PORT: 6379
     ports:
       - "9002:8000"
+    networks:
+      - zookeeper-net
+
+networks:
+  zookeeper-net:
+    driver: bridge
+
+volumes:
+  zookeeper-1-data:
+  zookeeper-1-logs:
+  zookeeper-2-data:
+  zookeeper-2-logs:
+  zookeeper-3-data:
+  zookeeper-3-logs:
