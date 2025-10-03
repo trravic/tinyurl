@@ -16,4 +16,5 @@ public class RedisService {
     public void set(String key, String value) {
         redisTemplate.opsForValue().set(key, value);
     }
+    
 }
