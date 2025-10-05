@@ -57,19 +57,43 @@ public class ShortenUrlService {
     }
 
     public ShortenUrlResponseDTO shortenUrl(ShortenUrlRequestDTO requestDTO) throws Exception {
-        Long counter = nextCounter();
+        Long counter;
         String longUrl = requestDTO.getLongUrl().strip();
-        String shortCode = Base62Encoder.encode(counter);
-        ShortenUrlModel shortenUrl = this.shortenUrlRepository.save(
-                new ShortenUrlModel(null, longUrl, shortCode, counter, Instant.now())
-        );
+        String shortCode;
+        ShortenUrlModel shortenUrl;
 
-        // Cache the newly created URL mapping
-        String cacheKey = URL_CACHE_PREFIX + shortCode;
-        redisService.set(cacheKey, longUrl);
-        log.info("Cached new URL mapping: {} -> {}", shortCode, longUrl);
+        //Custom Alias handling
+        if(requestDTO.getCustomAlias() != null && !requestDTO.getCustomAlias().isBlank()) {
+            shortCode = requestDTO.getCustomAlias().strip();
+            Long decodedAlias = Base62Encoder.decode(shortCode);
+            if(shortenUrlRepository.findByDecodedShortCode(decodedAlias).isPresent()) {
+                throw new IllegalArgumentException("Custom alias already in use. Please choose another one.");
+            }
+            counter = decodedAlias;
 
-        return new ShortenUrlResponseDTO(longUrl, shortenUrl.getShortCode());
+            shortenUrl = this.shortenUrlRepository.save(
+                    new ShortenUrlModel(null, longUrl, shortCode, counter, Instant.now())
+            );
+
+            // Cache the newly created URL mapping
+            String cacheKey = URL_CACHE_PREFIX + shortCode;
+            redisService.set(cacheKey, longUrl);
+            log.info("Cached Custom Alias new URL mapping: {} -> {}", shortCode, longUrl);
+
+        } else {
+            // long url handling - system generated short code
+            counter = nextCounter();
+
+            shortCode = Base62Encoder.encode(counter);
+            shortenUrl = this.shortenUrlRepository.save(
+                    new ShortenUrlModel(null, longUrl, shortCode, counter, Instant.now())
+            );
+            // Cache the newly created URL mapping
+            String cacheKey = URL_CACHE_PREFIX + shortCode;
+            redisService.set(cacheKey, longUrl);
+            log.info("Cached System-generated new URL mapping: {} -> {}", shortCode, longUrl);
+        }
+        return new ShortenUrlResponseDTO(longUrl, URL_CACHE_PREFIX + shortenUrl.getShortCode());
     }
 
     public ShortenUrlResponseDTO getShortenUrl(String shortUrl) {
