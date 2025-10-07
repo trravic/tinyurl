@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -29,6 +30,7 @@ public class AnalyticsService {
     private final UrlAnalyticsRepository analyticsRepository;
     private final ShortenUrlRepository shortenUrlRepository;
 
+    @Async
     public void trackClick(String shortCode, Long decodedShortCode, HttpServletRequest request) {
         try {
             // Parse user agent
