@@ -7,6 +7,7 @@ import com.shorturl.tokenservice.exception.NotFoundException;
 import com.shorturl.tokenservice.model.ShortenUrlModel;
 import com.shorturl.tokenservice.repository.ShortenUrlRepository;
 import com.shorturl.tokenservice.util.Base62Encoder;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,8 @@ public class ShortenUrlService {
     private final ShortenUrlRepository shortenUrlRepository;
     private final RedisService redisService;
     private final TokenRangeManagerService tokenRangeManagerService;
+
+    private final AnalyticsService analyticsService;
 
     private static final String CURRENT_KEY = "token-service:range:current";
     private static final String MAX_KEY = "token-service:range:max";
@@ -96,19 +99,22 @@ public class ShortenUrlService {
         return new ShortenUrlResponseDTO(longUrl, URL_CACHE_PREFIX + shortenUrl.getShortCode());
     }
 
-    public ShortenUrlResponseDTO getShortenUrl(String shortUrl) {
+    public ShortenUrlResponseDTO getShortenUrl(String shortUrl, HttpServletRequest request) {
         // Try cache first
         String cacheKey = URL_CACHE_PREFIX + shortUrl;
         String cachedLongUrl = redisService.getByKey(cacheKey);
+        Long decodedShortUrl = Base62Encoder.decode(shortUrl);
 
         if (cachedLongUrl != null) {
             log.info("Cache HIT for shortUrl: {}", shortUrl);
+
+            analyticsService.trackClick(shortUrl, decodedShortUrl, request);
+
             return new ShortenUrlResponseDTO(cachedLongUrl, shortUrl);
         }
 
         log.info("Cache MISS for shortUrl: {}. Fetching from MongoDB", shortUrl);
 
-        Long decodedShortUrl = Base62Encoder.decode(shortUrl);
         ShortenUrlModel shortenUrl = this.shortenUrlRepository
                 .findByDecodedShortCode(decodedShortUrl)
                 .orElseThrow(() -> new NotFoundException("No such Short Url exists"));
@@ -116,6 +122,8 @@ public class ShortenUrlService {
         // Update cache for future requests
         redisService.set(cacheKey, shortenUrl.getLongUrl());
         log.info("Updated cache for shortUrl: {}", shortUrl);
+
+        analyticsService.trackClick(shortUrl, decodedShortUrl, request);
 
         return new ShortenUrlResponseDTO(shortenUrl.getLongUrl(), shortenUrl.getShortCode());
     }

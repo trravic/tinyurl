@@ -20,4 +20,19 @@ public class ShortenUrlModel {
     @Indexed(unique = true)
     private Long decodedShortCode;
     private Instant createdAt;
+
+    private Long totalClicks;
+    private Instant lastAccessedAt;
+
+    // Constructor for backward compatibility
+    public ShortenUrlModel(String id, String longUrl, String shortCode, Long decodedShortCode, Instant createdAt) {
+        this.id = id;
+        this.longUrl = longUrl;
+        this.shortCode = shortCode;
+        this.decodedShortCode = decodedShortCode;
+        this.createdAt = createdAt;
+        this.totalClicks = 0L;
+        this.lastAccessedAt = null;
+    }
+
 }

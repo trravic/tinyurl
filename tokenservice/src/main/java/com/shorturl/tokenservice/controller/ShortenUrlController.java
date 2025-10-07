@@ -1,8 +1,11 @@
 package com.shorturl.tokenservice.controller;
 
+import com.shorturl.tokenservice.dto.AnalyticsResponseDTO;
 import com.shorturl.tokenservice.dto.ShortenUrlRequestDTO;
 import com.shorturl.tokenservice.dto.ShortenUrlResponseDTO;
+import com.shorturl.tokenservice.service.AnalyticsService;
 import com.shorturl.tokenservice.service.ShortenUrlService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ShortenUrlController {
     private final ShortenUrlService shortenUrlService;
+    private final AnalyticsService  analyticsService;
 
     @PostMapping("/shorten")
     public ResponseEntity<ShortenUrlResponseDTO> shortenUrl(@RequestBody @Valid ShortenUrlRequestDTO requestDTO) throws Exception {
@@ -23,10 +27,19 @@ public class ShortenUrlController {
     }
 
     @GetMapping("/{shortUrl}")
-    public ResponseEntity<ShortenUrlResponseDTO> getShortenUrl(@PathVariable("shortUrl") String shortUrl) {
-        ShortenUrlResponseDTO shortenUrlResponseDTO = shortenUrlService.getShortenUrl(shortUrl);
+    public ResponseEntity<ShortenUrlResponseDTO> getShortenUrl(@PathVariable("shortUrl") String shortUrl, HttpServletRequest request) {
+        ShortenUrlResponseDTO shortenUrlResponseDTO = shortenUrlService.getShortenUrl(shortUrl, request);
         HttpHeaders headers = new HttpHeaders();
         headers.add("Location", shortenUrlResponseDTO.getLongUrl());
         return new ResponseEntity<>(shortenUrlResponseDTO, headers, HttpStatus.MOVED_PERMANENTLY);
     }
+
+    @GetMapping("/analytics/{shortUrl}")
+    public ResponseEntity<AnalyticsResponseDTO> getAnalytics(
+            @PathVariable("shortUrl") String shortUrl) {
+        AnalyticsResponseDTO analyticsResponseDTO = analyticsService.getAnalytics(shortUrl);
+        return new ResponseEntity<>(analyticsResponseDTO, HttpStatus.OK);
+
+    }
+
 }
